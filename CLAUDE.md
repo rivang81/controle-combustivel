@@ -8,6 +8,8 @@ Phase 1 MVP implemented as a static page — `index.html` + `style.css` + `app.j
 
 **Run:** open `index.html` directly, or `python3 -m http.server 8000` and browse to `http://localhost:8000`. Syntax check: `node --check app.js`. Calculation logic lives in pure functions at the top of `app.js` (`calcularEstatisticas`, `comIntervalos`) and can be tested in Node by stubbing `localStorage`.
 
+**Deploy:** the app is a PWA (`manifest.json`, `sw.js`, `icone-*.png`) published via GitHub Pages at **https://rivang81.github.io/controle-combustivel/** (repo `rivang81/controle-combustivel`, branch `main`, legacy Pages build). To ship changes: commit, `git push`, wait ~1 min. **Bump the `CACHE` version in `sw.js` on every deploy** — the service worker is cache-first, so installed clients keep old assets until the cache name changes. The SW only registers over http(s), never `file://`.
+
 ## What this is
 
 "Controle de Combustível" — a fuel-tracking app for a single personal car, used on an aftermarket Android head unit (multimídia). The user logs each fill-up (fuel type, trip km, liters, optional price/liter) and the app shows real km/l per fuel, cost per km, and a verdict on whether ethanol or gasoline is cheaper **for this specific car**.
