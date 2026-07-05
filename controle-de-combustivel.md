@@ -248,8 +248,9 @@ Mantendo simples e offline-first:
 Botão ⚙️ fixo (visível no velocímetro e no formulário) abre a tela de configurações,
 persistida em `localStorage` (`config`):
 
-- **Idioma:** português ou inglês (interface, feedbacks e falas de voz).
+- **Idioma:** português ou inglês (interface, feedbacks e falas de voz). **Padrão: inglês.**
 - **Unidades:** Brasil (km, litros, km/l) ou EUA (milhas, galões, mpg; velocímetro em mph).
+  **Padrão: EUA.**
   Os dados são sempre **gravados em km/litros/R$ por litro** — conversão só na exibição
   e na entrada.
 - **Mascote:** Unicórnio (com arco-íris), Aviões, Passarinho, Dragão entre moinhos de

@@ -11,8 +11,8 @@ const LITROS_POR_GALAO = 3.785411784;
 // ---------- Configurações ----------
 
 const CONFIG_PADRAO = {
-  idioma: 'pt',             // 'pt' | 'en'
-  unidades: 'br',           // 'br' (km, litros) | 'us' (milhas, galões)
+  idioma: 'en',             // 'pt' | 'en'
+  unidades: 'us',           // 'br' (km, litros) | 'us' (milhas, galões)
   mascote: 'unicornio',     // 'unicornio' | 'avioes' | 'passarinho' | 'dragao' | 'nenhum'
   voz: true,                // responder também com voz (false = só texto na tela)
   tanqueLitros: 45,         // tanque de referência para anunciar economia (sempre litros)
