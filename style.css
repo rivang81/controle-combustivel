@@ -1,0 +1,316 @@
+/* Tema escuro por padrão — uso em central multimídia, à noite, com solavanco. */
+:root {
+  --bg: #0f1115;
+  --card: #1a1e26;
+  --card2: #232936;
+  --text: #e8eaf0;
+  --muted: #8b93a7;
+  --accent: #4da3ff;
+  --gasolina: #ff8c42;
+  --etanol: #3ddc84;
+  --danger: #ff5c5c;
+  --radius: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 18px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: 1rem;
+}
+
+main { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem; }
+
+h1 { font-size: 1.4rem; text-align: center; padding: .3rem 0 .5rem; }
+h2 { font-size: 1.05rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .8rem; }
+
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+/* ---- Formulário ---- */
+.fuel-toggle { display: flex; gap: .8rem; margin-bottom: 1rem; }
+
+.fuel-btn {
+  flex: 1;
+  padding: 1.1rem 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border: 2px solid var(--card2);
+  border-radius: var(--radius);
+  background: var(--card2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.fuel-btn[data-fuel="gasolina"].selected { border-color: var(--gasolina); color: var(--gasolina); background: rgba(255,140,66,.12); }
+.fuel-btn[data-fuel="etanol"].selected   { border-color: var(--etanol);   color: var(--etanol);   background: rgba(61,220,132,.12); }
+
+.field.ditado { margin-bottom: 1.1rem; }
+.field.ditado input { border-color: rgba(77,163,255,.4); }
+.ditado-feedback { color: var(--etanol); font-size: .9rem; margin-top: .45rem; min-height: 1.2em; }
+
+.field { margin-bottom: .9rem; }
+.field label { display: block; font-size: .95rem; color: var(--muted); margin-bottom: .35rem; }
+.field .opt { font-size: .8rem; opacity: .7; }
+
+.field input, .ajuste-data input {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.3rem;
+  border: 2px solid var(--card2);
+  border-radius: var(--radius);
+  background: var(--card2);
+  color: var(--text);
+}
+.field input:focus, .ajuste-data input:focus { outline: none; border-color: var(--accent); }
+
+.ajuste-data { margin-bottom: 1rem; }
+.ajuste-data summary { color: var(--muted); font-size: .9rem; cursor: pointer; padding: .3rem 0; }
+.ajuste-data input { margin-top: .5rem; font-size: 1.05rem; }
+
+.save-btn {
+  width: 100%;
+  padding: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #08111f;
+  cursor: pointer;
+}
+.save-btn:active { transform: scale(.98); }
+
+.hint { color: var(--muted); font-size: .9rem; margin-top: .8rem; line-height: 1.4; }
+
+/* ---- Painel ---- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: .8rem;
+  margin-bottom: .9rem;
+}
+.stat {
+  background: var(--card2);
+  border-radius: var(--radius);
+  padding: .8rem;
+  text-align: center;
+}
+.stat .label { font-size: .8rem; color: var(--muted); margin-bottom: .3rem; }
+.stat .value { font-size: 1.5rem; font-weight: 800; }
+.stat .value small { font-size: .85rem; font-weight: 400; color: var(--muted); }
+.stat.gasolina .value { color: var(--gasolina); }
+.stat.etanol .value { color: var(--etanol); }
+.stat.eco-pos .value { color: var(--etanol); }
+.stat.eco-neg .value { color: var(--danger); }
+td .eco-pos { color: var(--etanol); font-weight: 600; }
+td .eco-neg { color: var(--danger); font-weight: 600; }
+
+.veredito {
+  border-radius: var(--radius);
+  padding: 1rem;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  background: var(--card2);
+}
+.veredito.etanol   { background: rgba(61,220,132,.14); }
+.veredito.gasolina { background: rgba(255,140,66,.14); }
+.veredito strong { font-size: 1.3rem; display: block; }
+.veredito .sub { font-size: .9rem; color: var(--muted); display: block; margin-top: .3rem; }
+
+/* ---- Histórico ---- */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+th { text-align: left; color: var(--muted); font-size: .8rem; padding: .4rem .5rem; }
+td { padding: .55rem .5rem; border-top: 1px solid var(--card2); white-space: nowrap; }
+td.comb-gasolina { color: var(--gasolina); font-weight: 600; }
+td.comb-etanol { color: var(--etanol); font-weight: 600; }
+td .marco { font-size: .75rem; color: var(--muted); }
+
+.del-btn {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: .3rem .5rem;
+}
+
+/* ---- Velocímetro (GPS) ---- */
+.vel-btn {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border: 2px solid var(--card2);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--accent);
+  cursor: pointer;
+}
+.vel-btn:active { transform: scale(.98); }
+
+.painel-vel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.painel-vel[hidden] { display: none; }
+
+.vel-valor {
+  font-size: clamp(7rem, 30vw, 17rem);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+.vel-valor.aguardando { opacity: .22; }
+.vel-unidade { font-size: 1.6rem; color: var(--muted); margin-top: .5rem; }
+.vel-status {
+  position: absolute;
+  bottom: 1.5rem;
+  color: var(--muted);
+  font-size: .95rem;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.ir-abastecer {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 1rem 1.6rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border: 2px solid var(--card2);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--accent);
+  cursor: pointer;
+}
+.ir-abastecer:active { transform: scale(.97); }
+
+/* ---- Decorações laterais (arco-íris e unicórnio) ---- */
+.deco {
+  display: none;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 60; /* acima do modo velocímetro — a copiloto viaja junto */
+}
+.deco.esq { left: calc(50% - 490px); }
+.deco.dir { right: calc(50% - 480px); }
+
+@media (min-width: 1000px) {
+  body[data-mascote="unicornio"] .deco.m-unicornio,
+  body[data-mascote="avioes"] .deco.m-avioes,
+  body[data-mascote="passarinho"] .deco.m-passarinho,
+  body[data-mascote="dragao"] .deco.m-dragao { display: block; }
+  .deco svg { animation: flutuar 5s ease-in-out infinite alternate; }
+  .deco.dir svg { animation-delay: 2.5s; }
+}
+
+@keyframes flutuar {
+  from { transform: translateY(-6px); }
+  to   { transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deco svg { animation: none; }
+}
+
+/* ---- Configurações ---- */
+.config-btn {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 55;
+  width: 3.4rem;
+  height: 3.4rem;
+  font-size: 1.4rem;
+  border: 2px solid var(--card2);
+  border-radius: 50%;
+  background: var(--card);
+  cursor: pointer;
+}
+.config-btn:active { transform: scale(.95); }
+
+.painel-config {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: rgba(8, 10, 14, .74);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.painel-config[hidden] { display: none; }
+
+.config-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 1.3rem;
+  width: min(560px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.config-label { display: block; color: var(--muted); font-size: .9rem; margin-bottom: .5rem; }
+
+.seg { display: flex; flex-wrap: wrap; gap: .6rem; }
+.seg button {
+  flex: 1 1 auto;
+  padding: .95rem 1rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: 2px solid var(--card2);
+  border-radius: var(--radius);
+  background: var(--card2);
+  color: var(--muted);
+  cursor: pointer;
+}
+.seg button.selected { border-color: var(--accent); color: var(--accent); background: rgba(77,163,255,.12); }
+
+.config-grupo input {
+  width: 100%;
+  padding: .95rem;
+  font-size: 1.2rem;
+  border: 2px solid var(--card2);
+  border-radius: var(--radius);
+  background: var(--card2);
+  color: var(--text);
+}
+.config-grupo input:focus { outline: none; border-color: var(--accent); }
+
+/* ---- Toast ---- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 2rem;
+  transform: translateX(-50%);
+  background: var(--etanol);
+  color: #06331b;
+  font-size: 1.3rem;
+  font-weight: 800;
+  padding: 1rem 2.2rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.5);
+}
