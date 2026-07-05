@@ -577,6 +577,7 @@ function aoDitar() {
 let velWatchId = null;
 let wakeLock = null;
 let ultimaPosicao = null;
+let ultimaKmh = null; // última leitura, para re-exibir na troca de unidades
 
 function distanciaMetros(a, b) {
   const R = 6371000;
@@ -601,12 +602,16 @@ function velocidadeKmh(pos) {
   return kmh < 2 ? 0 : kmh; // parado, GPS "treme" 1-2 km/h
 }
 
-function aoLerPosicao(pos) {
-  const kmh = velocidadeKmh(pos);
+function exibirVelocidade() {
   const valor = document.getElementById('velValor');
-  valor.textContent = kmh === null ? '0' : String(Math.round(usaUS() ? kmh / KM_POR_MILHA : kmh));
-  valor.classList.toggle('aguardando', kmh === null);
-  document.getElementById('velStatus').textContent = kmh === null
+  valor.textContent = ultimaKmh === null ? '0' : String(Math.round(usaUS() ? ultimaKmh / KM_POR_MILHA : ultimaKmh));
+  valor.classList.toggle('aguardando', ultimaKmh === null);
+}
+
+function aoLerPosicao(pos) {
+  ultimaKmh = velocidadeKmh(pos);
+  exibirVelocidade();
+  document.getElementById('velStatus').textContent = ultimaKmh === null
     ? t('velAguardando')
     : t('velPrecisao', Math.round(pos.coords.accuracy));
 }
@@ -632,9 +637,8 @@ async function abrirVelocimetro() {
 
 function fecharVelocimetro() {
   document.getElementById('painelVel').hidden = true;
-  const valor = document.getElementById('velValor');
-  valor.textContent = '0';
-  valor.classList.add('aguardando');
+  ultimaKmh = null;
+  exibirVelocidade();
   if (velWatchId !== null) { navigator.geolocation.clearWatch(velWatchId); velWatchId = null; }
   ultimaPosicao = null;
   wakeLock?.release().catch(() => {});
@@ -709,6 +713,7 @@ function aplicarConfig() {
   aplicarTextos();
   marcarSegmentos();
   preencherCamposConfig();
+  exibirVelocidade(); // reconverte a leitura atual se as unidades mudaram
   renderTudo();
 }
 
