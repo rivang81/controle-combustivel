@@ -1,0 +1,10 @@
+{
+  "name": "controle-combustivel",
+  "private": true,
+  "scripts": {
+    "build": "esbuild voz.js --target=es2015 --outfile=voz.min.js && esbuild app.js --target=es2015 --outfile=app.min.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}
