@@ -25,7 +25,10 @@
       <div class="field ditado">
         <label for="ditado"><span id="labelDitado">🎤 Ditar registro</span>
           <span class="opt" id="optDitado">toque no campo e use o microfone do teclado</span></label>
-        <input type="text" id="ditado" autocomplete="off">
+        <div class="ditado-linha">
+          <input type="text" id="ditado" autocomplete="off">
+          <button type="button" class="mic-btn" id="btnMic" aria-label="Ditar por voz">🎤</button>
+        </div>
         <p class="ditado-feedback" id="ditadoFeedback"></p>
       </div>
 

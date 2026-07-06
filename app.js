@@ -47,6 +47,22 @@ const uVel = () => (usaUS() ? 'mph' : 'km/h');
 
 // ---------- Utilitários ----------
 
+// Chrome 79 não tem crypto.randomUUID (Chrome 92+); tem crypto.getRandomValues.
+function gerarId() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  if (window.crypto && crypto.getRandomValues) {
+    const b = crypto.getRandomValues(new Uint8Array(16));
+    b[6] = (b[6] & 0x0f) | 0x40; // versão 4
+    b[8] = (b[8] & 0x3f) | 0x80; // variante
+    const h = [];
+    for (let i = 0; i < 16; i++) h.push((b[i] + 0x100).toString(16).slice(1));
+    return h.slice(0, 4).join('') + '-' + h.slice(4, 6).join('') + '-'
+         + h.slice(6, 8).join('') + '-' + h.slice(8, 10).join('') + '-'
+         + h.slice(10, 16).join('');
+  }
+  return 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2);
+}
+
 // Aceita vírgula decimal ("38,5") e ponto ("38.5").
 function parseNumero(texto) {
   const n = parseFloat(String(texto).trim().replace(',', '.'));
@@ -77,7 +93,8 @@ const T = {
     btnVel: '🚘 Modo velocímetro',
     tituloForm: 'Novo abastecimento',
     labelDitado: '🎤 Ditar registro',
-    optDitado: 'toque no campo e use o microfone do teclado',
+    optDitado: 'toque no 🎤 e use o microfone do teclado (voz offline: teclado Sayboard)',
+    micLabel: 'Ditar por voz',
     phDitado: () => (usaUS()
       ? 'ex.: "gasolina 22,30 etanol 15,10" ou "256 milhas, 10,2 galões"'
       : 'ex.: "gasolina 5,89 etanol 3,99" ou "412 km, 38,5 litros"'),
@@ -157,7 +174,8 @@ const T = {
     btnVel: '🚘 Speedometer mode',
     tituloForm: 'New fill-up',
     labelDitado: '🎤 Dictate entry',
-    optDitado: 'tap the field and use the keyboard mic',
+    optDitado: 'tap 🎤 and use the keyboard mic (offline voice: Sayboard keyboard)',
+    micLabel: 'Dictate by voice',
     phDitado: () => (usaUS()
       ? 'e.g. "gas 22.30 ethanol 15.10" or "256 miles, 10.2 gallons"'
       : 'e.g. "gas 5.89 ethanol 3.99" or "412 km, 38.5 liters"'),
@@ -424,7 +442,7 @@ function aoSalvar() {
   if (litros === null || litros <= 0) return mostrarToast(t('informeLitros'));
 
   const registro = {
-    id: crypto.randomUUID(),
+    id: gerarId(),
     criadoEm: dataAjustada ? new Date(dataAjustada).toISOString() : new Date().toISOString(),
     combustivel: combustivelSelecionado,
     kmRodados: distInterna(km),
@@ -680,6 +698,8 @@ function aplicarTextos() {
 
   const dit = document.getElementById('ditado');
   if (dit) dit.placeholder = t('phDitado');
+  const mic = document.getElementById('btnMic');
+  if (mic) mic.setAttribute('aria-label', t('micLabel'));
   const velU = document.getElementById('velUnidade');
   if (velU) velU.textContent = uVel();
   atualizarLabelPrecoOutro();
@@ -727,6 +747,15 @@ document.querySelectorAll('.fuel-btn').forEach((btn) => {
 });
 
 document.getElementById('ditado').addEventListener('input', aoDitar);
+
+// Botão 🎤: foca o campo de ditado — o Android abre o teclado ativo (Sayboard,
+// se definido como padrão, oferece voz offline). A página não tem como escolher
+// o teclado nem iniciar a escuta; isso é sempre do sistema/usuário.
+document.getElementById('btnMic').addEventListener('click', () => {
+  const campo = document.getElementById('ditado');
+  campo.focus();
+  campo.scrollIntoView({ block: 'center' });
+});
 
 document.getElementById('btnSalvar').addEventListener('click', aoSalvar);
 
