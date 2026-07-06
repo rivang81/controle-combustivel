@@ -1,6 +1,7 @@
 // Controle de Combustível — app principal
 // Armazenamento: localStorage. Método do tanque cheio (ver spec §3.2).
-// Dados sempre gravados em km / litros / R$ por litro; unidades US só na exibição.
+// Dados sempre gravados em km / litros / moeda por litro; unidades US só na exibição.
+// A moeda nunca é convertida — exibida como "$" neutro, vale para qualquer moeda.
 
 const STORAGE_KEY = 'abastecimentos';
 const CONFIG_KEY = 'config';
@@ -36,13 +37,13 @@ const volInterno = (v) => (usaUS() ? v * LITROS_POR_GALAO : v);
 const precoExib = (porLitro) => (usaUS() ? porLitro * LITROS_POR_GALAO : porLitro);
 const precoInterno = (v) => (usaUS() ? v / LITROS_POR_GALAO : v);
 const consumoExib = (kmL) => (usaUS() ? (kmL * LITROS_POR_GALAO) / KM_POR_MILHA : kmL); // km/l → mpg
-const custoDistExib = (porKm) => (usaUS() ? porKm * KM_POR_MILHA : porKm);              // R$/km → R$/mi
+const custoDistExib = (porKm) => (usaUS() ? porKm * KM_POR_MILHA : porKm);              // $/km → $/mi
 
 const uDist = () => (usaUS() ? 'mi' : 'km');
 const uVol = () => (usaUS() ? 'gal' : 'l');
 const uConsumo = () => (usaUS() ? 'mpg' : 'km/l');
-const uPreco = () => (usaUS() ? 'R$/gal' : 'R$/l');
-const uCustoDist = () => (usaUS() ? 'R$/mi' : 'R$/km');
+const uPreco = () => (usaUS() ? '$/gal' : '$/l');
+const uCustoDist = () => (usaUS() ? '$/mi' : '$/km');
 const uVel = () => (usaUS() ? 'mph' : 'km/h');
 
 // ---------- Utilitários ----------
@@ -102,7 +103,7 @@ const T = {
     etanol: 'Etanol',
     labelKm: () => (usaUS() ? 'Milhas rodadas (trip)' : 'Km rodados (trip)'),
     labelLitros: () => (usaUS() ? 'Galões abastecidos' : 'Litros abastecidos'),
-    labelPreco: () => (usaUS() ? 'Preço por galão (R$)' : 'Preço por litro (R$)'),
+    labelPreco: () => (usaUS() ? 'Preço por galão ($)' : 'Preço por litro ($)'),
     opcional: 'opcional',
     optPrecoOutro: 'opcional — para medir a economia',
     precoOutroGasolina: 'Preço da gasolina hoje',
@@ -130,23 +131,23 @@ const T = {
     vEmpate: '⚖️ Empate técnico',
     vEtanol: '✅ ETANOL compensa',
     vGasolina: '✅ GASOLINA compensa',
-    vEquilibrio: (p) => `Etanol vale a pena até <b>R$ ${fmt(precoExib(p), 2)}</b>/${usaUS() ? 'galão' : 'litro'}.`,
+    vEquilibrio: (p) => `Etanol vale a pena até <b>$ ${fmt(precoExib(p), 2)}</b>/${usaUS() ? 'galão' : 'litro'}.`,
     vBasePadrao: () => `Usando rendimento estimado (${fmt(config.rendimentoInicial * 100, 0)}%) — registre abastecimentos dos dois combustíveis para calibrar com o seu carro.`,
     vBaseReal: (r) => `Rendimento real do seu carro: etanol faz ${fmt(r * 100, 0)}% da gasolina.`,
     escolhaComb: '⚠ Escolha o combustível',
     informeKm: () => (usaUS() ? '⚠ Informe as milhas rodadas' : '⚠ Informe os km rodados'),
     informeLitros: () => (usaUS() ? '⚠ Informe os galões' : '⚠ Informe os litros'),
     salvo: '✓ Salvo',
-    salvoEconomia: (v) => `✓ Salvo · você economizou R$ ${fmt(v, 2)}`,
-    salvoGasto: (v) => `✓ Salvo · R$ ${fmt(v, 2)} a mais neste tanque`,
+    salvoEconomia: (v) => `✓ Salvo · você economizou $ ${fmt(v, 2)}`,
+    salvoGasto: (v) => `✓ Salvo · $ ${fmt(v, 2)} a mais neste tanque`,
     confirmaExcluir: 'Excluir este registro?',
     entendi: (p) => `✓ Entendi: ${p}`,
     naoEntendi: () => `Não entendi — fale ${T.pt.phDitado()}`,
     fbEmpate: ' — empate técnico, tanto faz.',
-    fbVencedor: (nome, e) => ` — ${nome.toUpperCase()} compensa: ~R$ ${fmt(e, 0)} no tanque de ${fmt(volExib(config.tanqueLitros), 0)} ${uVol()}.`,
+    fbVencedor: (nome, e) => ` — ${nome.toUpperCase()} compensa: ~$ ${fmt(e, 0)} no tanque de ${fmt(volExib(config.tanqueLitros), 0)} ${uVol()}.`,
     fbDite: () => (usaUS() ? ' Agora dite as milhas e os galões.' : ' Agora dite os km e os litros.'),
     falaEmpate: 'Empate técnico: tanto faz etanol ou gasolina neste posto.',
-    falaVencedor: (nome, econ) => `${nome} compensa: economia de aproximadamente ${Math.round(econ)} reais no tanque de ${fmt(volExib(config.tanqueLitros), 0)} ${usaUS() ? 'galões' : 'litros'}.`,
+    falaVencedor: (nome, econ) => `${nome} compensa: economia de aproximadamente ${Math.round(econ)} no tanque de ${fmt(volExib(config.tanqueLitros), 0)} ${usaUS() ? 'galões' : 'litros'}.`,
     falaEstimativa: () => ` Estimativa inicial, com etanol rendendo ${fmt(config.rendimentoInicial * 100, 0)} por cento da gasolina.`,
     velAtivando: 'Ativando GPS…',
     velAguardando: 'Aguardando leitura de velocidade…',
@@ -183,7 +184,7 @@ const T = {
     etanol: 'Ethanol',
     labelKm: () => (usaUS() ? 'Miles driven (trip)' : 'Km driven (trip)'),
     labelLitros: () => (usaUS() ? 'Gallons added' : 'Liters added'),
-    labelPreco: () => (usaUS() ? 'Price per gallon (R$)' : 'Price per liter (R$)'),
+    labelPreco: () => (usaUS() ? 'Price per gallon ($)' : 'Price per liter ($)'),
     opcional: 'optional',
     optPrecoOutro: 'optional — to measure savings',
     precoOutroGasolina: "Today's gasoline price",
@@ -211,23 +212,23 @@ const T = {
     vEmpate: '⚖️ Too close to call',
     vEtanol: '✅ ETHANOL pays off',
     vGasolina: '✅ GASOLINE pays off',
-    vEquilibrio: (p) => `Ethanol is worth it up to <b>R$ ${fmt(precoExib(p), 2)}</b>/${usaUS() ? 'gallon' : 'liter'}.`,
+    vEquilibrio: (p) => `Ethanol is worth it up to <b>$ ${fmt(precoExib(p), 2)}</b>/${usaUS() ? 'gallon' : 'liter'}.`,
     vBasePadrao: () => `Using estimated efficiency (${fmt(config.rendimentoInicial * 100, 0)}%) — log fill-ups with both fuels to calibrate for your car.`,
     vBaseReal: (r) => `Your car's real numbers: ethanol does ${fmt(r * 100, 0)}% of gasoline.`,
     escolhaComb: '⚠ Pick a fuel',
     informeKm: () => (usaUS() ? '⚠ Enter the miles driven' : '⚠ Enter the km driven'),
     informeLitros: () => (usaUS() ? '⚠ Enter the gallons' : '⚠ Enter the liters'),
     salvo: '✓ Saved',
-    salvoEconomia: (v) => `✓ Saved · you saved R$ ${fmt(v, 2)}`,
-    salvoGasto: (v) => `✓ Saved · R$ ${fmt(v, 2)} extra on this tank`,
+    salvoEconomia: (v) => `✓ Saved · you saved $ ${fmt(v, 2)}`,
+    salvoGasto: (v) => `✓ Saved · $ ${fmt(v, 2)} extra on this tank`,
     confirmaExcluir: 'Delete this record?',
     entendi: (p) => `✓ Got it: ${p}`,
     naoEntendi: () => `Didn't catch that — say ${T.en.phDitado()}`,
     fbEmpate: ' — too close to call, either works.',
-    fbVencedor: (nome, e) => ` — ${nome.toUpperCase()} pays off: ~R$ ${fmt(e, 0)} on a ${fmt(volExib(config.tanqueLitros), 0)} ${uVol()} tank.`,
+    fbVencedor: (nome, e) => ` — ${nome.toUpperCase()} pays off: ~$ ${fmt(e, 0)} on a ${fmt(volExib(config.tanqueLitros), 0)} ${uVol()} tank.`,
     fbDite: () => (usaUS() ? ' Now dictate the miles and gallons.' : ' Now dictate the km and liters.'),
     falaEmpate: 'Too close to call: either ethanol or gasoline works at this station.',
-    falaVencedor: (nome, econ) => `${nome} pays off: about ${Math.round(econ)} reais saved on a ${fmt(volExib(config.tanqueLitros), 0)}-${usaUS() ? 'gallon' : 'liter'} tank.`,
+    falaVencedor: (nome, econ) => `${nome} pays off: about ${Math.round(econ)} saved on a ${fmt(volExib(config.tanqueLitros), 0)}-${usaUS() ? 'gallon' : 'liter'} tank.`,
     falaEstimativa: () => ` Initial estimate, assuming ethanol does ${fmt(config.rendimentoInicial * 100, 0)} percent of gasoline.`,
     velAtivando: 'Starting GPS…',
     velAguardando: 'Waiting for a speed reading…',
@@ -272,7 +273,7 @@ function salvar(registros) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(registros));
 }
 
-// ---------- Cálculos (spec §5) — sempre em km / litros / R$ por litro ----------
+// ---------- Cálculos (spec §5) — sempre em km / litros / moeda por litro ----------
 
 // Ordena por data e marca o primeiro registro como marco inicial (sem intervalo válido).
 function comIntervalos(registros) {
@@ -370,7 +371,7 @@ function renderPainel(stats) {
     (stats.economiaTotal !== null
       ? statHtml(
           stats.economiaTotal >= 0 ? t('economiaAcum') : t('gastoAcum'),
-          Math.abs(stats.economiaTotal), 'R$',
+          Math.abs(stats.economiaTotal), '$',
           stats.economiaTotal >= 0 ? 'eco-pos' : 'eco-neg',
         ) : '');
 
@@ -571,8 +572,8 @@ function aoDitar() {
     preencherPrecosDitados();
     anunciarRecomendacao(rec);
     partes.push(
-      `${t('gasolina').toLowerCase()} R$ ${fmtInput(r.precoGasolina)}`,
-      `${t('etanol').toLowerCase()} R$ ${fmtInput(r.precoEtanol)}`,
+      `${t('gasolina').toLowerCase()} $ ${fmtInput(r.precoGasolina)}`,
+      `${t('etanol').toLowerCase()} $ ${fmtInput(r.precoEtanol)}`,
     );
     veredito = rec.vencedor === 'empate'
       ? t('fbEmpate')
@@ -583,7 +584,7 @@ function aoDitar() {
   if (r.combustivel) { selecionarCombustivel(r.combustivel); partes.push(t(r.combustivel).toLowerCase()); }
   if (r.km !== null) { document.getElementById('km').value = fmtInput(r.km); partes.push(`${fmtInput(r.km)} ${uDist()}`); }
   if (r.litros !== null) { document.getElementById('litros').value = fmtInput(r.litros); partes.push(`${fmtInput(r.litros)} ${uVol()}`); }
-  if (r.preco !== null) { document.getElementById('preco').value = fmtInput(r.preco); partes.push(`R$ ${fmtInput(r.preco)}/${uVol()}`); }
+  if (r.preco !== null) { document.getElementById('preco').value = fmtInput(r.preco); partes.push(`$ ${fmtInput(r.preco)}/${uVol()}`); }
 
   fb.textContent = partes.length ? t('entendi', partes.join(' · ')) + veredito : t('naoEntendi');
 }

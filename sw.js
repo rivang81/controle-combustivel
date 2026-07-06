@@ -1,7 +1,7 @@
 // Service worker — deixa o app 100% offline depois da primeira visita.
 // Estratégia cache-first: tudo é estático e local, sem backend.
 // Ao publicar mudanças, incremente a versão para renovar o cache.
-const CACHE = 'combustivel-v5';
+const CACHE = 'combustivel-v6';
 const ARQUIVOS = [
   './',
   './index.html',

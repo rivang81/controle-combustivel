@@ -35,7 +35,7 @@ Phase 1 MVP implemented as a static page — `index.html` + `style.css` + `app.j
 
 A ⚙️ button (fixed, visible on both screens) opens settings, persisted in localStorage key `config`: language (pt/en, **default en**), units (br/us, **default us** — user's explicit choice), mascot (`unicornio`/`avioes`/`passarinho`/`dragao`/`nenhum`), voice replies on/off (`voz`, gates all `falar()` speech output — text feedback always stays), tank size (default 45 L) and initial ethanol efficiency (default **0.68**). Key invariants:
 
-- **Storage is always km / liters / R$-per-liter.** US units (miles, gallons, mpg, mph) exist only at the display/input boundary — `distExib/distInterna`, `volExib/volInterno`, `precoExib/precoInterno`, `consumoExib`, `custoDistExib` in `app.js`. Never store converted values.
+- **Storage is always km / liters / currency-per-liter.** Currency is never converted and is displayed as a neutral `$` (works for any currency). US units (miles, gallons, mpg, mph) exist only at the display/input boundary — `distExib/distInterna`, `volExib/volInterno`, `precoExib/precoInterno`, `consumoExib`, `custoDistExib` in `app.js`. Never store converted values.
 - All UI strings go through `t(key, ...args)` backed by the `T` dictionary (pt/en); several entries are functions because they depend on the unit system. Static HTML elements have ids that `aplicarTextos()` fills — new UI text must be added to both languages and wired there.
 - Mascots are SVG pairs in `index.html` with classes `m-<name>`; visibility is CSS-driven via `body[data-mascote=...]` (≥1000px only). The windmill blades use SMIL `animateTransform`.
 - URL param overrides for testing (not persisted): `?mascote=dragao&idioma=en&unidades=us`.
