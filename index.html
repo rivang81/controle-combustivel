@@ -73,6 +73,7 @@
       <h2 id="tituloPainel">Painel</h2>
       <div class="stats" id="stats"></div>
       <div class="veredito" id="veredito"></div>
+      <button type="button" class="graf-btn" id="btnGraficos">📊 Gráficos</button>
     </section>
 
     <!-- Histórico -->
@@ -305,6 +306,23 @@
     <div class="vel-valor aguardando" id="velValor">0</div>
     <div class="vel-unidade" id="velUnidade">mph</div>
     <p class="vel-status" id="velStatus"></p>
+  </div>
+
+  <!-- Gráficos históricos -->
+  <div class="painel-graficos" id="painelGraficos" hidden>
+    <div class="graficos-inner">
+      <div class="graf-header">
+        <h2 id="grafTitulo">Gráficos</h2>
+        <button type="button" class="graf-fechar" id="btnFecharGraficos">← Voltar</button>
+      </div>
+      <div class="seg graf-gran">
+        <button type="button" id="btnGranSemana">Semana</button>
+        <button type="button" id="btnGranMes" class="selected">Mês</button>
+        <button type="button" id="btnGranAno">Ano</button>
+      </div>
+      <div id="graficosConteudo"></div>
+    </div>
+    <div class="graf-tooltip" id="grafTooltip" hidden></div>
   </div>
 
   <!-- Configurações -->

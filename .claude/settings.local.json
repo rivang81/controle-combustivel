@@ -5,7 +5,10 @@
       "Bash(node *)",
       "Bash(google-chrome --headless --disable-gpu --screenshot=tela.png --window-size=1280,720 --hide-scrollbars file:///home/rick/ProjetoDashCombustivel/index.html)",
       "Bash(google-chrome --headless --disable-gpu --screenshot=tela2.png --window-size=1280,720 --hide-scrollbars file:///home/rick/ProjetoDashCombustivel/index.html)",
-      "Bash(google-chrome --headless --disable-gpu --screenshot=vel.png --window-size=1280,720 --hide-scrollbars \"file:///home/rick/ProjetoDashCombustivel/index.html#velocimetro\")"
+      "Bash(google-chrome --headless --disable-gpu --screenshot=vel.png --window-size=1280,720 --hide-scrollbars \"file:///home/rick/ProjetoDashCombustivel/index.html#velocimetro\")",
+      "Bash(grep -n 'async \\\\|await \\\\|=>\\\\|const \\\\|let \\\\|\\\\.\\\\.\\\\.\\\\|`' app.js)",
+      "Bash(npm run *)",
+      "Skill(dataviz)"
     ]
   }
 }

@@ -9,6 +9,12 @@
   --gasolina: #ff8c42;
   --etanol: #3ddc84;
   --danger: #ff5c5c;
+  /* Séries dos gráficos: tons mais escuros dos matizes de marca — validados
+     (banda de luminosidade, croma, CVD, contraste) contra a superfície do card. */
+  --chart-gasolina: #e06a12;
+  --chart-etanol: #20b062;
+  --chart-eco-pos: #20b062;
+  --chart-eco-neg: #e04f4f;
   --radius: 14px;
 }
 
@@ -158,6 +164,103 @@ td .marco { font-size: .75rem; color: var(--muted); }
   cursor: pointer;
   padding: .3rem .5rem;
 }
+
+/* ---- Gráficos históricos ---- */
+.graf-btn {
+  width: 100%;
+  margin-top: .9rem;
+  padding: 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border: 2px solid var(--card2);
+  border-radius: var(--radius);
+  background: var(--card2);
+  color: var(--accent);
+  cursor: pointer;
+}
+.graf-btn:active { transform: scale(.98); }
+
+.painel-graficos {
+  position: fixed;
+  /* Chrome 79 não entende `inset` (Chrome 87+) */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 52;
+  background: var(--bg);
+  overflow-y: auto;
+  padding: 1rem;
+}
+.painel-graficos[hidden] { display: none; }
+
+.graficos-inner { max-width: 640px; margin: 0 auto; }
+.graficos-inner > * + * { margin-top: 1rem; }
+
+.graf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 3.6rem; /* espaço para o botão ⚙️ fixo */
+  min-height: 3.4rem;
+}
+.graf-header h2 { margin-bottom: 0; }
+
+.graf-fechar {
+  padding: .85rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: 2px solid var(--card2);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--accent);
+  cursor: pointer;
+}
+.graf-fechar:active { transform: scale(.97); }
+
+.graf-card h3 { font-size: .95rem; color: var(--muted); font-weight: 600; text-transform: none; letter-spacing: 0; margin-bottom: .6rem; }
+
+.graf-legenda { display: flex; flex-wrap: wrap; margin-bottom: .5rem; font-size: .85rem; color: var(--muted); }
+.graf-legenda span { display: flex; align-items: center; margin-right: 1.1rem; }
+.graf-legenda .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: .4rem; }
+.sw-gas { background: var(--chart-gasolina); }
+.sw-eta { background: var(--chart-etanol); }
+
+.graf-svg { width: 100%; height: auto; display: block; }
+.graf-svg text { font-family: inherit; }
+.graf-eixo { fill: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.graf-rotulo { fill: var(--text); font-size: 13px; font-weight: 700; }
+.graf-grid { stroke: var(--card2); stroke-width: 1; }
+.graf-zero { stroke: var(--muted); stroke-width: 1; }
+.graf-sep { stroke: var(--card); stroke-width: 2; }
+.fg-gas { fill: var(--chart-gasolina); }
+.fg-eta { fill: var(--chart-etanol); }
+.fg-pos { fill: var(--chart-eco-pos); }
+.fg-neg { fill: var(--chart-eco-neg); }
+.graf-hit { fill: transparent; pointer-events: all; cursor: pointer; }
+.graf-hit.ativo { fill: rgba(255, 255, 255, .06); }
+
+.graf-tooltip {
+  position: fixed;
+  z-index: 53;
+  background: var(--card2);
+  border: 1px solid rgba(255, 255, 255, .1);
+  border-radius: 10px;
+  padding: .6rem .8rem;
+  font-size: .9rem;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, .5);
+  pointer-events: none;
+  max-width: 280px;
+  white-space: nowrap;
+}
+.graf-tooltip[hidden] { display: none; }
+.graf-tooltip .tt-titulo { color: var(--muted); font-size: .8rem; margin-bottom: .35rem; }
+.graf-tooltip .tt-linha { display: flex; align-items: center; margin-top: .15rem; }
+.graf-tooltip .tt-chave { display: inline-block; width: 14px; height: 3px; border-radius: 2px; margin-right: .45rem; }
+.graf-tooltip .tt-valor { font-weight: 700; margin-right: .35rem; font-variant-numeric: tabular-nums; }
+.graf-tooltip .tt-nome { color: var(--muted); }
+.graf-tooltip .tt-pos { color: var(--etanol); }
+.graf-tooltip .tt-neg { color: var(--danger); }
 
 /* ---- Velocímetro (GPS) ---- */
 .vel-btn {
