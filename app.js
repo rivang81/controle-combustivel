@@ -18,6 +18,7 @@ const CONFIG_PADRAO = {
   voz: true,                // responder também com voz (false = só texto na tela)
   tanqueLitros: 45,         // tanque de referência para anunciar economia (sempre litros)
   rendimentoInicial: 0.68,  // etanol/gasolina enquanto não há histórico real do carro
+  kmReferencia: 300,        // distância de referência do gráfico de economia projetada (sempre km)
 };
 
 function carregarConfig() {
@@ -170,6 +171,12 @@ const T = {
       ? 'Informe o preço por galão nos abastecimentos para ver o custo.'
       : 'Informe o preço por litro nos abastecimentos para ver o custo.'),
     grafSemEconomia: 'Informe também o preço do outro combustível para medir a economia.',
+    grafConsumoLinha: () => `Consumo por combustível (${uConsumo()})`,
+    grafSemConsumoLinha: 'Registre pelo menos dois abastecimentos para ver o consumo por combustível.',
+    grafCustoKm: () => `Custo por km por combustível (${uCustoDist()})`,
+    grafSemCustoKm: 'Informe o preço no abastecimento anterior para ver o custo por km deste intervalo.',
+    grafEconomiaRef: (km) => `Economia projetada do etanol a cada ${fmt(distExib(km), 0)} ${uDist()}`,
+    grafSemEconomiaRef: 'Informe os dois preços do posto no abastecimento para ver a economia projetada.',
     ttTotal: 'total',
     ttEconomia: 'economia', ttGasto: 'gasto a mais',
     cfgTitulo: 'Configurações',
@@ -184,6 +191,7 @@ const T = {
     vozOn: '🔊 Ativada', vozOff: '🔇 Desligada (só texto)',
     cfgTanque: () => (usaUS() ? 'Tamanho do tanque (galões)' : 'Tamanho do tanque (litros)'),
     cfgRendimento: 'Rendimento inicial do etanol (ex.: 0,68)',
+    cfgKmReferencia: () => (usaUS() ? 'Distância de referência (milhas)' : 'Distância de referência (km)'),
     cfgFechar: 'Fechar',
   },
   en: {
@@ -267,6 +275,12 @@ const T = {
       ? 'Enter the price per gallon on fill-ups to see cost.'
       : 'Enter the price per liter on fill-ups to see cost.'),
     grafSemEconomia: "Also enter the other fuel's price to measure savings.",
+    grafConsumoLinha: () => `Fuel efficiency by type (${uConsumo()})`,
+    grafSemConsumoLinha: 'Log at least two fill-ups to see efficiency by fuel type.',
+    grafCustoKm: () => `Cost per distance by fuel (${uCustoDist()})`,
+    grafSemCustoKm: "Enter the price on the previous fill-up to see this interval's cost per distance.",
+    grafEconomiaRef: (km) => `Projected ethanol savings every ${fmt(distExib(km), 0)} ${uDist()}`,
+    grafSemEconomiaRef: 'Enter both pump prices on a fill-up to see projected savings.',
     ttTotal: 'total',
     ttEconomia: 'saved', ttGasto: 'extra spent',
     cfgTitulo: 'Settings',
@@ -281,6 +295,7 @@ const T = {
     vozOn: '🔊 On', vozOff: '🔇 Off (text only)',
     cfgTanque: () => (usaUS() ? 'Tank size (gallons)' : 'Tank size (liters)'),
     cfgRendimento: 'Initial ethanol efficiency (e.g. 0.68)',
+    cfgKmReferencia: () => (usaUS() ? 'Reference distance (miles)' : 'Reference distance (km)'),
     cfgFechar: 'Close',
   },
 };
@@ -308,11 +323,15 @@ function salvar(registros) {
 // ---------- Cálculos (spec §5) — sempre em km / litros / moeda por litro ----------
 
 // Ordena por data e marca o primeiro registro como marco inicial (sem intervalo válido).
+// `combustivel` no registro é o combustível ABASTECIDO agora (vale pro próximo intervalo).
+// Quem foi de fato consumido nos km_rodados deste registro é o combustível colocado no
+// abastecimento ANTERIOR — é ele que estava no tanque enquanto o carro rodava até aqui.
 function comIntervalos(registros) {
   const ordenados = [...registros].sort((a, b) => a.criadoEm.localeCompare(b.criadoEm));
   return ordenados.map((r, i) => ({
     ...r,
     marcoInicial: i === 0,
+    combustivelConsumido: i > 0 ? ordenados[i - 1].combustivel : null,
     consumoKmL: i > 0 && r.litros > 0 ? r.kmRodados / r.litros : null,
   }));
 }
@@ -325,7 +344,9 @@ function calcularEstatisticas(registros) {
   const lista = comIntervalos(registros);
   const validos = lista.filter((r) => r.consumoKmL !== null);
 
-  const porComb = (c) => validos.filter((r) => r.combustivel === c).map((r) => r.consumoKmL);
+  // Agrupa pelo combustível que gerou o km_rodados (o do abastecimento anterior),
+  // não pelo combustível sendo escolhido/abastecido agora — ver comIntervalos().
+  const porComb = (c) => validos.filter((r) => r.combustivelConsumido === c).map((r) => r.consumoKmL);
   const mediaGasolina = media(porComb('gasolina'));
   const mediaEtanol = media(porComb('etanol'));
   const mediaGeral = media(validos.map((r) => r.consumoKmL));
@@ -437,7 +458,7 @@ function renderHistorico(stats) {
       <td class="comb-${r.combustivel}">${r.combustivel === 'gasolina' ? t('gasAbrev') : t('etaAbrev')}</td>
       <td>${fmt(distExib(r.kmRodados), 1)}</td>
       <td>${fmt(volExib(r.litros), 1)}</td>
-      <td>${r.consumoKmL !== null ? fmt(consumoExib(r.consumoKmL), 1) : `<span class="marco">${t('marcoInicial')}</span>`}</td>
+      <td class="${r.consumoKmL !== null ? `comb-${r.combustivelConsumido}` : ''}">${r.consumoKmL !== null ? fmt(consumoExib(r.consumoKmL), 1) : `<span class="marco">${t('marcoInicial')}</span>`}</td>
       <td>${r.precoPorLitro ? fmt(precoExib(r.precoPorLitro), 2) : '—'}</td>
       <td>${r.economia !== null
         ? `<span class="${r.economia >= 0 ? 'eco-pos' : 'eco-neg'}">${r.economia >= 0 ? '+' : '−'}${fmt(Math.abs(r.economia), 2)}</span>`
@@ -712,6 +733,7 @@ document.addEventListener('visibilitychange', () => {
 
 let granularidade = 'mes'; // 'semana' | 'mes' | 'ano' — não persistido
 let periodosVisiveis = []; // última agregação renderizada (fonte do tooltip)
+let pontosLinhas = {};     // { consumo, custoPorKm, economiaReferencia } — idem, pros gráficos por abastecimento
 let hitAtivo = null;
 
 function inicioPeriodo(d, gran) {
@@ -772,6 +794,51 @@ function agruparPorPeriodo(lista, gran, max = 12) {
     seq.push(porInicio[d.getTime()] || vazio(new Date(d)));
   }
   return seq.slice(-max);
+}
+
+// ---------- Gráficos por abastecimento (linha, um ponto por evento) ----------
+// Diferente de agruparPorPeriodo (que soma por semana/mês/ano), estes três plotam
+// cada abastecimento individualmente — mostram a tendência posto a posto, não um
+// total por período. Recebem `stats.lista` (já ordenada, já com combustivelConsumido
+// e consumoKmL de comIntervalos) e só cortam pros últimos `max` no final.
+
+// Só os últimos `max`; `exigirIntervalo` descarta o marco inicial (sem consumoKmL).
+function ultimosAbastecimentos(lista, max, exigirIntervalo) {
+  const filtrada = exigirIntervalo ? lista.filter((r) => !r.marcoInicial) : lista;
+  return filtrada.slice(-max);
+}
+
+// Custo por km de cada intervalo. Usa o preço do abastecimento ANTERIOR — foi o
+// combustível dele (combustivelConsumido, ver comIntervalos) que gerou o kmRodados/
+// consumoKmL deste registro, não o combustível/preço sendo abastecido agora. Preço é
+// opcional: sem ele no registro anterior, o ponto fica de fora (gap na linha), nunca
+// se repete o último preço conhecido.
+function comCustoPorKm(lista) {
+  return lista.map((r, i) => {
+    const precoConsumido = i > 0 ? lista[i - 1].precoPorLitro : null;
+    const custoPorKm = r.consumoKmL && precoConsumido > 0 ? precoConsumido / r.consumoKmL : null;
+    return { ...r, custoPorKm };
+  });
+}
+
+// Quanto o etanol economizaria (ou custaria a mais) rodando `kmReferencia` com os
+// preços deste abastecimento — projeção com a eficiência ATUAL do carro (mesmo
+// rendimento em todos os pontos; a linha ainda varia porque os preços de cada posto
+// mudam). Ao contrário dos outros dois, inclui o marco inicial (não depende de
+// intervalo, só dos dois preços daquela visita à bomba).
+function comEconomiaReferencia(lista, mediaGasolina, mediaEtanol, rendimento, kmReferencia) {
+  const baseGasolina = mediaGasolina ?? (mediaEtanol ? mediaEtanol / rendimento : null);
+  const baseEtanol = mediaEtanol ?? (baseGasolina ? baseGasolina * rendimento : null);
+  return lista.map((r) => {
+    if (!baseGasolina || !baseEtanol || !(r.precoPorLitro > 0) || !(r.precoOutro > 0)) {
+      return { ...r, economiaReferencia: null };
+    }
+    const precoGasolina = r.combustivel === 'gasolina' ? r.precoPorLitro : r.precoOutro;
+    const precoEtanol = r.combustivel === 'etanol' ? r.precoPorLitro : r.precoOutro;
+    const custoGasolina = (kmReferencia / baseGasolina) * precoGasolina;
+    const custoEtanol = (kmReferencia / baseEtanol) * precoEtanol;
+    return { ...r, economiaReferencia: custoGasolina - custoEtanol };
+  });
 }
 
 // Geometria comum dos gráficos (viewBox fixo, escala pelo CSS).
@@ -920,6 +987,62 @@ function svgDivergente(grafico, periodos) {
     + marcas + rotulosXHtml(periodos, geo.xCentro) + '</svg>';
 }
 
+// Como rotulosXHtml, mas rotula pela data de cada abastecimento, não período de calendário.
+function rotulosXEventoHtml(pontos, xCentro) {
+  const salto = pontos.length > 8 ? 2 : 1;
+  const locale = config.idioma === 'pt' ? 'pt-BR' : 'en-US';
+  let s = '';
+  for (let i = pontos.length - 1; i >= 0; i -= salto) {
+    const rotulo = new Date(pontos[i].criadoEm).toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
+    s += `<text class="graf-eixo" x="${px(xCentro(i))}" y="${GRAF_H - 6}" text-anchor="middle">${rotulo}</text>`;
+  }
+  return s;
+}
+
+// Uma ou mais séries de linha sobre um eixo X de eventos igualmente espaçados (um
+// abastecimento por posição, não um período de calendário). Cada série desenha só
+// entre pontos consecutivos com valor — um `null` no meio quebra a linha em vez de
+// interpolar (ex.: preço não informado naquele intervalo).
+function svgLinhas(grafico, pontos, series) {
+  const todosValores = series.flatMap((s) => pontos.map(s.valor)).filter((v) => v !== null && v !== undefined);
+  if (!todosValores.length) return null;
+  const escala = escalaLimpa(Math.min(0, ...todosValores), Math.max(0, ...todosValores));
+  const plotH = GRAF_H - GRAF_M.topo - GRAF_M.baixo;
+  const amplitude = escala.topo - escala.fundo || 1;
+  const yDe = (v) => (GRAF_H - GRAF_M.baixo) - ((v - escala.fundo) / amplitude) * plotH;
+  const geo = geometriaColunas(pontos.length);
+  const casas = escala.passo % 1 ? 1 : 0;
+
+  let marcas = '';
+  for (const s of series) {
+    let trecho = [];
+    const fechaTrecho = () => {
+      if (trecho.length > 1) {
+        marcas += `<polyline class="${s.classeLinha}" points="${trecho.map(([x, y]) => `${px(x)},${px(y)}`).join(' ')}"/>`;
+      }
+      marcas += trecho.map(([x, y, v]) => {
+        const cls = typeof s.classePonto === 'function' ? s.classePonto(v) : s.classePonto;
+        return `<circle class="${cls}" cx="${px(x)}" cy="${px(y)}" r="3.5"/>`;
+      }).join('');
+      trecho = [];
+    };
+    pontos.forEach((p, i) => {
+      const v = s.valor(p);
+      if (v === null || v === undefined) { fechaTrecho(); return; }
+      trecho.push([geo.xCentro(i), yDe(v), v]);
+    });
+    fechaTrecho();
+  }
+  pontos.forEach((_, i) => { marcas += hitHtml(grafico, i, geo.banda); });
+
+  return `<svg class="graf-svg" viewBox="0 0 ${GRAF_W} ${GRAF_H}">`
+    + gradeHtml(escala, yDe, casas)
+    + (escala.fundo < 0
+        ? `<line class="graf-zero" x1="${GRAF_M.esq}" y1="${px(yDe(0))}" x2="${GRAF_W - GRAF_M.dir}" y2="${px(yDe(0))}"/>`
+        : '')
+    + marcas + rotulosXEventoHtml(pontos, geo.xCentro) + '</svg>';
+}
+
 function legendaCombustiveisHtml() {
   return '<div class="graf-legenda">'
     + `<span><i class="sw sw-gas"></i>${t('gasolina')}</span>`
@@ -958,6 +1081,17 @@ function renderGraficos() {
       : '')
     + '</div>';
 
+  // Gráficos por abastecimento (um ponto por evento, não por período) — ver nota em
+  // ultimosAbastecimentos/comCustoPorKm/comEconomiaReferencia sobre a que combustível
+  // e a que preço cada um pertence.
+  const rendimento = stats.veredito?.rendimento ?? stats.rendimentoReal ?? config.rendimentoInicial;
+  pontosLinhas.consumo = ultimosAbastecimentos(stats.lista, 12, true);
+  pontosLinhas.custoPorKm = ultimosAbastecimentos(comCustoPorKm(stats.lista), 12, true);
+  pontosLinhas.economiaReferencia = ultimosAbastecimentos(
+    comEconomiaReferencia(stats.lista, stats.mediaGasolina, stats.mediaEtanol, rendimento, config.kmReferencia),
+    12, false,
+  );
+
   cont.innerHTML = kpis
     + cardGraficoHtml(t('grafVolume'), legendaCombustiveisHtml(),
         svgEmpilhado('volume', periodosVisiveis,
@@ -969,7 +1103,29 @@ function renderGraficos() {
         t('grafSemCusto'))
     + cardGraficoHtml(t('grafEconomia'), '',
         svgDivergente('economia', periodosVisiveis),
-        t('grafSemEconomia'));
+        t('grafSemEconomia'))
+    + cardGraficoHtml(t('grafConsumoLinha'), legendaCombustiveisHtml(),
+        svgLinhas('consumo', pontosLinhas.consumo, [
+          { classeLinha: 'ln-gas', classePonto: 'pt-gas',
+            valor: (p) => (p.combustivelConsumido === 'gasolina' ? consumoExib(p.consumoKmL) : null) },
+          { classeLinha: 'ln-eta', classePonto: 'pt-eta',
+            valor: (p) => (p.combustivelConsumido === 'etanol' ? consumoExib(p.consumoKmL) : null) },
+        ]),
+        t('grafSemConsumoLinha'))
+    + cardGraficoHtml(t('grafCustoKm'), legendaCombustiveisHtml(),
+        svgLinhas('custoPorKm', pontosLinhas.custoPorKm, [
+          { classeLinha: 'ln-gas', classePonto: 'pt-gas',
+            valor: (p) => (p.combustivelConsumido === 'gasolina' && p.custoPorKm !== null ? custoDistExib(p.custoPorKm) : null) },
+          { classeLinha: 'ln-eta', classePonto: 'pt-eta',
+            valor: (p) => (p.combustivelConsumido === 'etanol' && p.custoPorKm !== null ? custoDistExib(p.custoPorKm) : null) },
+        ]),
+        t('grafSemCustoKm'))
+    + cardGraficoHtml(t('grafEconomiaRef', config.kmReferencia), '',
+        svgLinhas('economiaReferencia', pontosLinhas.economiaReferencia, [
+          { classeLinha: 'ln-econ', classePonto: (v) => (v >= 0 ? 'pt-pos' : 'pt-neg'),
+            valor: (p) => p.economiaReferencia },
+        ]),
+        t('grafSemEconomiaRef'));
 }
 
 // Tooltip ao toque numa coluna (o valor exato também vive na tabela do
@@ -998,18 +1154,23 @@ function ttLinhaEl(classeChave, valor, nome, classeValor) {
   return linha;
 }
 
+// Gráficos por abastecimento (um ponto por evento) — os demais são por período.
+const GRAFICOS_LINHA = new Set(['consumo', 'custoPorKm', 'economiaReferencia']);
+
 function mostrarTooltipGrafico(hit) {
-  const p = periodosVisiveis[Number(hit.dataset.i)];
+  const grafico = hit.dataset.grafico;
+  const i = Number(hit.dataset.i);
+  const ehLinha = GRAFICOS_LINHA.has(grafico);
+  const p = ehLinha ? pontosLinhas[grafico]?.[i] : periodosVisiveis[i];
   if (!p) return;
   const tt = document.getElementById('grafTooltip');
   tt.textContent = '';
 
   const titulo = document.createElement('div');
   titulo.className = 'tt-titulo';
-  titulo.textContent = rotuloPeriodoLongo(p.inicio, granularidade);
+  titulo.textContent = ehLinha ? fmtData(p.criadoEm) : rotuloPeriodoLongo(p.inicio, granularidade);
   tt.appendChild(titulo);
 
-  const grafico = hit.dataset.grafico;
   if (grafico === 'volume') {
     tt.appendChild(ttLinhaEl('sw-gas', `${fmt(volExib(p.litrosGasolina), 1)} ${uVol()}`, t('gasolina').toLowerCase()));
     tt.appendChild(ttLinhaEl('sw-eta', `${fmt(volExib(p.litrosEtanol), 1)} ${uVol()}`, t('etanol').toLowerCase()));
@@ -1018,12 +1179,36 @@ function mostrarTooltipGrafico(hit) {
     tt.appendChild(ttLinhaEl('sw-gas', `$ ${fmt(p.custoGasolina, 2)}`, t('gasolina').toLowerCase()));
     tt.appendChild(ttLinhaEl('sw-eta', `$ ${fmt(p.custoEtanol, 2)}`, t('etanol').toLowerCase()));
     tt.appendChild(ttLinhaEl(null, `$ ${fmt(p.custoGasolina + p.custoEtanol, 2)}`, t('ttTotal')));
-  } else if (p.temEconomia) {
-    const pos = p.economia >= 0;
-    tt.appendChild(ttLinhaEl(null, `${pos ? '+' : '−'}$ ${fmt(Math.abs(p.economia), 2)}`,
-      pos ? t('ttEconomia') : t('ttGasto'), pos ? 'tt-pos' : 'tt-neg'));
-  } else {
-    tt.appendChild(ttLinhaEl(null, '—', ''));
+  } else if (grafico === 'economia') {
+    if (p.temEconomia) {
+      const pos = p.economia >= 0;
+      tt.appendChild(ttLinhaEl(null, `${pos ? '+' : '−'}$ ${fmt(Math.abs(p.economia), 2)}`,
+        pos ? t('ttEconomia') : t('ttGasto'), pos ? 'tt-pos' : 'tt-neg'));
+    } else {
+      tt.appendChild(ttLinhaEl(null, '—', ''));
+    }
+  } else if (grafico === 'consumo') {
+    if (p.consumoKmL !== null) {
+      const chave = p.combustivelConsumido === 'gasolina' ? 'sw-gas' : 'sw-eta';
+      tt.appendChild(ttLinhaEl(chave, `${fmt(consumoExib(p.consumoKmL), 1)} ${uConsumo()}`, t(p.combustivelConsumido).toLowerCase()));
+    } else {
+      tt.appendChild(ttLinhaEl(null, '—', ''));
+    }
+  } else if (grafico === 'custoPorKm') {
+    if (p.custoPorKm !== null) {
+      const chave = p.combustivelConsumido === 'gasolina' ? 'sw-gas' : 'sw-eta';
+      tt.appendChild(ttLinhaEl(chave, `$ ${fmt(custoDistExib(p.custoPorKm), 2)} ${uCustoDist()}`, t(p.combustivelConsumido).toLowerCase()));
+    } else {
+      tt.appendChild(ttLinhaEl(null, '—', ''));
+    }
+  } else if (grafico === 'economiaReferencia') {
+    if (p.economiaReferencia !== null) {
+      const pos = p.economiaReferencia >= 0;
+      tt.appendChild(ttLinhaEl(null, `${pos ? '+' : '−'}$ ${fmt(Math.abs(p.economiaReferencia), 2)}`,
+        pos ? t('ttEconomia') : t('ttGasto'), pos ? 'tt-pos' : 'tt-neg'));
+    } else {
+      tt.appendChild(ttLinhaEl(null, '—', ''));
+    }
   }
 
   if (hitAtivo) hitAtivo.classList.remove('ativo');
@@ -1085,7 +1270,8 @@ function aplicarTextos() {
   st('btnMascUnicornio', 'mUnicornio'); st('btnMascAvioes', 'mAvioes'); st('btnMascPassarinho', 'mPassarinho');
   st('btnMascDragao', 'mDragao'); st('btnMascNenhum', 'mNenhum');
   st('cfgVozLabel', 'cfgVoz'); st('btnVozOn', 'vozOn'); st('btnVozOff', 'vozOff');
-  st('cfgTanqueLabel', 'cfgTanque'); st('cfgRendimentoLabel', 'cfgRendimento'); st('btnFecharConfig', 'cfgFechar');
+  st('cfgTanqueLabel', 'cfgTanque'); st('cfgRendimentoLabel', 'cfgRendimento');
+  st('cfgKmReferenciaLabel', 'cfgKmReferencia'); st('btnFecharConfig', 'cfgFechar');
 
   const dit = document.getElementById('ditado');
   if (dit) dit.placeholder = t('phDitado');
@@ -1117,6 +1303,7 @@ function marcarSegmentos() {
 function preencherCamposConfig() {
   document.getElementById('cfgTanque').value = fmtInput(Math.round(volExib(config.tanqueLitros) * 10) / 10);
   document.getElementById('cfgRendimento').value = fmtInput(config.rendimentoInicial);
+  document.getElementById('cfgKmReferencia').value = fmtInput(Math.round(distExib(config.kmReferencia)));
 }
 
 function aplicarConfig() {
@@ -1205,6 +1392,12 @@ document.getElementById('cfgRendimento').addEventListener('change', () => {
     if (v > 1.5) v /= 100; // aceita "68" como 68%
     if (v >= 0.3 && v <= 1) { config.rendimentoInicial = v; salvarConfig(); }
   }
+  aplicarConfig();
+});
+
+document.getElementById('cfgKmReferencia').addEventListener('change', () => {
+  const v = parseNumero(document.getElementById('cfgKmReferencia').value);
+  if (v !== null && v >= 10 && v <= 2000) { config.kmReferencia = distInterna(v); salvarConfig(); }
   aplicarConfig();
 });
 

@@ -107,6 +107,15 @@ custoTotal   = litros * precoPorLitro;          // R$ do abastecimento
 custoPorKm   = precoPorLitro / consumoKmL;      // R$/km (= preço / (km/l))
 ```
 
+> **Atenção — a que combustível pertence `consumoKmL`:** `combustivel` no registro é o
+> que está sendo **abastecido agora** (vale para o *próximo* intervalo). Mas `kmRodados`
+> foi rodado com o tanque cheio do abastecimento **anterior** — logo o combustível
+> efetivamente consumido nesse intervalo é o `combustivel` do registro anterior, não o
+> deste. Ex.: abasteceu gasolina, rodou 400 km, chegou no posto e trocou para etanol —
+> esses 400 km foram feitos a gasolina, então o `consumoKmL` calculado agora entra na
+> média da **gasolina**, mesmo o registro tendo `combustivel: 'etanol'`. Só o preço/custo
+> pago agora (`precoPorLitro`, `custoTotal`) é que é do combustível deste registro.
+
 ---
 
 ## 5. Lógica de análise
@@ -117,9 +126,11 @@ Média dos `consumoKmL` de todos os registros de cada combustível (ignorando o 
 registro sem intervalo válido).
 
 ```
-mediaEtanol   = média(consumoKmL onde combustivel = etanol)
-mediaGasolina = média(consumoKmL onde combustivel = gasolina)
+mediaEtanol   = média(consumoKmL onde combustivel-do-registro-ANTERIOR = etanol)
+mediaGasolina = média(consumoKmL onde combustivel-do-registro-ANTERIOR = gasolina)
 ```
+
+(ver nota no §4 sobre a que combustível pertence `consumoKmL`)
 
 ### 5.2 Custo por km (métrica de comparação principal)
 
@@ -189,6 +200,35 @@ Fluxo de chegada ao posto: o usuário dita no campo de voz os dois preços de um
    inicial de 68% quando ainda não há histórico dos dois combustíveis;
 4. aguarda o ditado seguinte com km e litros (o texto acumula no mesmo campo e é
    reinterpretado; o anúncio de voz não se repete para os mesmos preços).
+
+### 5.6 Gráficos por abastecimento (linha)
+
+Além dos gráficos agregados por período (§5.1–§5.4, somados por semana/mês/ano), o
+painel "📊 Gráficos" tem três gráficos de **linha, um ponto por abastecimento**
+(últimos 12), mostrando a tendência posto a posto:
+
+1. **Consumo por combustível (km/l)** — direto de `consumoKmL`/`combustivelConsumido`
+   (§4). Uma série por combustível; só entram registros com intervalo válido (não o
+   marco inicial).
+2. **Custo por km por combustível** — `custoPorKm = precoPorLitro-do-abastecimento-ANTERIOR / consumoKmL`.
+   O preço certo é o do abastecimento anterior, pelo mesmo motivo do
+   `combustivelConsumido`: foi o preço que se pagou pelo combustível que de fato foi
+   consumido nesse intervalo, não o preço de agora. Preço é opcional — quando o
+   anterior não tiver preço, o ponto fica de fora (gap na linha), nunca repete o
+   último preço conhecido.
+3. **Economia projetada do etanol** — quanto o etanol economizaria (ou custaria a
+   mais) rodando uma distância de referência configurável (`config.kmReferencia`,
+   padrão 300 km) com os **dois preços daquele abastecimento** (`precoPorLitro` +
+   `precoOutro`), convertidos em litros pela eficiência **atual** do carro
+   (`rendimentoReal ?? rendimentoInicial`, igual em todos os pontos — não é uma
+   reconstrução histórica de rendimento por época). Diferente dos outros dois,
+   inclui o marco inicial se ele tiver os dois preços, já que não depende de
+   intervalo/km rodados. Positivo = etanol mais barato pra rodar a distância de
+   referência; negativo = gasolina mais barato.
+
+Diferente da "Economia por período" (§5.4, soma a economia **real** de cada tanque
+comprado), este terceiro gráfico é uma projeção **hipotética** numa distância fixa —
+os dois convivem no painel com títulos que deixam essa diferença clara.
 
 ---
 

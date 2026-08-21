@@ -237,6 +237,14 @@ td .marco { font-size: .75rem; color: var(--muted); }
 .fg-eta { fill: var(--chart-etanol); }
 .fg-pos { fill: var(--chart-eco-pos); }
 .fg-neg { fill: var(--chart-eco-neg); }
+/* Gráficos de linha por abastecimento (svgLinhas): linha sem preenchimento + pontos cheios. */
+.ln-gas { fill: none; stroke: var(--chart-gasolina); stroke-width: 2; }
+.ln-eta { fill: none; stroke: var(--chart-etanol); stroke-width: 2; }
+.ln-econ { fill: none; stroke: var(--muted); stroke-width: 2; }
+.pt-gas { fill: var(--chart-gasolina); }
+.pt-eta { fill: var(--chart-etanol); }
+.pt-pos { fill: var(--chart-eco-pos); }
+.pt-neg { fill: var(--chart-eco-neg); }
 .graf-hit { fill: transparent; pointer-events: all; cursor: pointer; }
 .graf-hit.ativo { fill: rgba(255, 255, 255, .06); }
 
